@@ -1,0 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 240 6% 4%;
+    --foreground: 210 40% 96%;
+    --card: 240 6% 10%;
+    --card-foreground: 210 40% 96%;
+    --popover: 240 6% 10%;
+    --popover-foreground: 210 40% 96%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 210 40% 96%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 215 16% 57%;
+    --accent: 199 89% 48%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 240 4% 16%;
+    --input: 240 4% 16%;
+    --ring: 199 89% 48%;
+    --radius: 0.75rem;
+    --surface: 240 6% 10%;
+    --primary-muted: 199 89% 48%;
+    --sidebar-background: 240 6% 7%;
+    --sidebar-foreground: 240 5% 65%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4% 16%;
+    --sidebar-accent-foreground: 210 40% 96%;
+    --sidebar-border: 240 4% 16%;
+    --sidebar-ring: 199 89% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+@layer utilities {
+  .card-shadow {
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .card-shadow-hover {
+    box-shadow: 0 0 0 1px hsl(199 89% 48% / 0.3), 0 8px 16px -4px rgba(0,0,0,0.4);
+  }
+  .input-glow {
+    box-shadow: 0 0 0 2px hsl(199 89% 48% / 0.4);
+  }
+  .glass {
+    @apply bg-card/80 backdrop-blur-md;
+  }
+}
