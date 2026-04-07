@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,36 +6,68 @@
 
 @layer base {
   :root {
-    --background: 240 6% 4%;
-    --foreground: 210 40% 96%;
-    --card: 240 6% 10%;
-    --card-foreground: 210 40% 96%;
-    --popover: 240 6% 10%;
-    --popover-foreground: 210 40% 96%;
-    --primary: 199 89% 48%;
+    --background: 42 40% 97%;
+    --foreground: 210 15% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 210 15% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 15% 18%;
+    --primary: 23 91% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 210 40% 96%;
-    --muted: 240 4% 16%;
-    --muted-foreground: 215 16% 57%;
-    --accent: 199 89% 48%;
+    --secondary: 35 33% 94%;
+    --secondary-foreground: 210 15% 20%;
+    --muted: 35 33% 94%;
+    --muted-foreground: 210 12% 42%;
+    --accent: 23 91% 50%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 63% 31%;
+    --destructive: 0 70% 45%;
     --destructive-foreground: 210 40% 98%;
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 199 89% 48%;
+    --border: 30 17% 86%;
+    --input: 30 17% 86%;
+    --ring: 23 91% 50%;
     --radius: 0.75rem;
-    --surface: 240 6% 10%;
-    --primary-muted: 199 89% 48%;
-    --sidebar-background: 240 6% 7%;
-    --sidebar-foreground: 240 5% 65%;
-    --sidebar-primary: 199 89% 48%;
+    --surface: 35 40% 98%;
+    --primary-muted: 23 91% 50%;
+    --sidebar-background: 35 33% 94%;
+    --sidebar-foreground: 210 12% 42%;
+    --sidebar-primary: 23 91% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 4% 16%;
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 240 4% 16%;
-    --sidebar-ring: 199 89% 48%;
+    --sidebar-accent: 35 33% 94%;
+    --sidebar-accent-foreground: 210 15% 20%;
+    --sidebar-border: 30 17% 86%;
+    --sidebar-ring: 23 91% 50%;
+  }
+
+  .dark {
+    --background: 218 22% 9%;
+    --foreground: 210 25% 96%;
+    --card: 218 20% 13%;
+    --card-foreground: 210 25% 96%;
+    --popover: 218 20% 13%;
+    --popover-foreground: 210 25% 96%;
+    --primary: 23 94% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 219 19% 18%;
+    --secondary-foreground: 210 25% 96%;
+    --muted: 219 19% 18%;
+    --muted-foreground: 216 13% 68%;
+    --accent: 23 94% 58%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 40%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 219 19% 24%;
+    --input: 219 19% 24%;
+    --ring: 23 94% 58%;
+    --surface: 218 20% 13%;
+    --primary-muted: 23 94% 58%;
+    --sidebar-background: 218 24% 11%;
+    --sidebar-foreground: 216 13% 68%;
+    --sidebar-primary: 23 94% 58%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 219 19% 18%;
+    --sidebar-accent-foreground: 210 25% 96%;
+    --sidebar-border: 219 19% 24%;
+    --sidebar-ring: 23 94% 58%;
   }
 }
 
@@ -45,19 +77,29 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-image:
+      radial-gradient(circle at 5% 0%, rgba(255, 140, 66, 0.22), transparent 26%),
+      radial-gradient(circle at 100% 0%, rgba(17, 153, 142, 0.2), transparent 36%);
+    background-attachment: fixed;
+    font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: 'Space Grotesk', 'Manrope', sans-serif;
   }
 }
 
 @layer utilities {
   .card-shadow {
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 0 0 1px hsl(var(--border) / 0.9), 0 10px 30px -22px rgba(0, 0, 0, 0.45);
   }
   .card-shadow-hover {
-    box-shadow: 0 0 0 1px hsl(199 89% 48% / 0.3), 0 8px 16px -4px rgba(0,0,0,0.4);
+    box-shadow: 0 0 0 1px hsl(var(--primary) / 0.35), 0 24px 40px -30px rgba(0, 0, 0, 0.6);
   }
   .input-glow {
-    box-shadow: 0 0 0 2px hsl(199 89% 48% / 0.4);
+    box-shadow: 0 0 0 2px hsl(var(--primary) / 0.28);
   }
   .glass {
     @apply bg-card/80 backdrop-blur-md;

@@ -1,14 +1,16 @@
 import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, User, LogOut } from 'lucide-react';
+import { ArrowLeft, Bell, User, LogOut, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useTheme } from 'next-themes';
 
 const Settings = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   useEffect(() => {
@@ -20,7 +22,7 @@ const Settings = () => {
       const perm = await Notification.requestPermission();
       setNotificationsEnabled(perm === 'granted');
     } else if (Notification.permission === 'granted') {
-      setNotificationsEnabled(false);
+      setNotificationsEnabled(prev => !prev);
     }
   };
 
@@ -62,6 +64,17 @@ const Settings = () => {
             <div className="flex items-center justify-between">
               <span className="text-sm text-foreground">Task reminders</span>
               <Switch checked={notificationsEnabled} onCheckedChange={toggleNotifications} />
+            </div>
+          </div>
+
+          {/* Theme */}
+          <div className="card-shadow rounded-xl bg-card p-4">
+            <div className="mb-3 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              {theme === 'dark' ? <Moon className="h-3 w-3" /> : <Sun className="h-3 w-3" />} Theme
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-foreground">Dark mode</span>
+              <Switch checked={theme === 'dark'} onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')} />
             </div>
           </div>
 
