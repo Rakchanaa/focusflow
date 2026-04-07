@@ -33,6 +33,38 @@ const defaultFilters: TodoFilters = {
   category: 'all',
 };
 
+const safeUuid = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `todo-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+};
+
+const safeStorageGet = (key: string) => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
+const safeStorageSet = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    // Ignore write failures in restricted browser contexts.
+  }
+};
+
+const safeStorageRemove = (key: string) => {
+  try {
+    localStorage.removeItem(key);
+  } catch {
+    // Ignore remove failures in restricted browser contexts.
+  }
+};
+
 const parseTaskExtras = (rawDescription: string | null) => {
   if (!rawDescription?.startsWith('__META__')) {
     return {
@@ -73,7 +105,7 @@ const normalizeTodo = (todo: Partial<Todo>, index: number): Todo => {
   const is_complete = status === 'completed' || Boolean(todo.is_complete);
 
   return {
-    id: todo.id || crypto.randomUUID(),
+    id: todo.id || safeUuid(),
     user_id: todo.user_id || '',
     task_name: todo.task_name || 'Untitled Task',
     description: extras.description,
@@ -90,6 +122,8 @@ const normalizeTodo = (todo: Partial<Todo>, index: number): Todo => {
     created_at: todo.created_at || new Date().toISOString(),
   };
 };
+
+const toDbDescription = (description: string | null) => description;
 
 export function useTodos() {
   const { user } = useAuth();
@@ -109,28 +143,28 @@ export function useTodos() {
 
     setLoading(true);
 
-    // Prefer local persistence first for richer task fields.
-    const localRaw = localStorage.getItem(storageKey);
-    if (localRaw) {
-      try {
-        const parsed = JSON.parse(localRaw) as Partial<Todo>[];
-        const normalized = parsed.map((todo, index) => normalizeTodo(todo, index));
-        normalized.sort((a, b) => a.sort_order - b.sort_order);
-        setTodos(normalized);
-        setLoading(false);
-        return;
-      } catch {
-        localStorage.removeItem(storageKey);
-      }
-    }
-
-    // Bootstrap from Supabase if local cache does not exist yet.
+    // Always prefer Supabase so tasks are shared/persistent across sessions.
     const { data, error } = await supabase.from('todos').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
 
     if (error) {
-      toast.error('Failed to fetch tasks');
       console.error(error);
-      setTodos([]);
+
+      // Fallback to local cache when network/Supabase is unavailable.
+      const localRaw = safeStorageGet(storageKey);
+      if (localRaw) {
+        try {
+          const parsed = JSON.parse(localRaw) as Partial<Todo>[];
+          const normalized = parsed.map((todo, index) => normalizeTodo(todo, index));
+          normalized.sort((a, b) => a.sort_order - b.sort_order);
+          setTodos(normalized);
+        } catch {
+          safeStorageRemove(storageKey);
+          setTodos([]);
+        }
+      } else {
+        setTodos([]);
+      }
+      toast.error('Failed to fetch tasks from Supabase');
     } else {
       const normalized = (data || []).map((todo, index) => normalizeTodo(todo, index));
       normalized.sort((a, b) => a.sort_order - b.sort_order);
@@ -146,17 +180,40 @@ export function useTodos() {
 
   useEffect(() => {
     if (loading || !user) return;
-    localStorage.setItem(storageKey, JSON.stringify(todos));
+    safeStorageSet(storageKey, JSON.stringify(todos));
   }, [loading, storageKey, todos, user]);
 
   const addTodo = async (todo: Omit<Todo, 'id' | 'user_id' | 'created_at' | 'is_complete' | 'sort_order'>) => {
     if (!user) return;
-    const nextTodo: Todo = normalizeTodo(
-      {
-        ...todo,
+
+    const { data, error } = await supabase
+      .from('todos')
+      .insert({
         user_id: user.id,
+        task_name: todo.task_name,
+        description: toDbDescription(todo.description),
         is_complete: todo.status === 'completed',
-        sort_order: 0,
+        due_date: todo.due_date,
+        due_time: todo.due_time,
+        repeat_type: todo.repeat_type,
+      })
+      .select()
+      .single();
+
+    if (error || !data) {
+      toast.error('Failed to add task to Supabase');
+      console.error(error);
+      return;
+    }
+
+    const nextTodo = normalizeTodo(
+      {
+        ...data,
+        status: todo.status,
+        priority: todo.priority,
+        category: todo.category,
+        tags: todo.tags,
+        reminder_minutes: todo.reminder_minutes,
       },
       0,
     );
@@ -166,6 +223,14 @@ export function useTodos() {
   };
 
   const toggleComplete = async (id: string, is_complete: boolean) => {
+    const { error } = await supabase.from('todos').update({ is_complete }).eq('id', id);
+
+    if (error) {
+      toast.error('Failed to update task');
+      console.error(error);
+      return;
+    }
+
     setTodos(prev =>
       prev.map(t =>
         t.id === id
@@ -181,11 +246,37 @@ export function useTodos() {
   };
 
   const deleteTodo = async (id: string) => {
+    const { error } = await supabase.from('todos').delete().eq('id', id);
+
+    if (error) {
+      toast.error('Failed to delete task');
+      console.error(error);
+      return;
+    }
+
     setTodos(prev => prev.filter(t => t.id !== id).map((todo, index) => ({ ...todo, sort_order: index })));
     toast.success('Task archived');
   };
 
   const updateTodo = async (id: string, updates: Partial<Todo>) => {
+    const patch: Record<string, unknown> = {};
+
+    if (typeof updates.task_name === 'string') patch.task_name = updates.task_name;
+    if (updates.description !== undefined) patch.description = toDbDescription(updates.description ?? null);
+    if (typeof updates.is_complete === 'boolean') patch.is_complete = updates.is_complete;
+    if (updates.due_date !== undefined) patch.due_date = updates.due_date;
+    if (updates.due_time !== undefined) patch.due_time = updates.due_time;
+    if (updates.repeat_type !== undefined) patch.repeat_type = updates.repeat_type;
+
+    if (Object.keys(patch).length > 0) {
+      const { error } = await supabase.from('todos').update(patch).eq('id', id);
+      if (error) {
+        toast.error('Failed to update task');
+        console.error(error);
+        return;
+      }
+    }
+
     setTodos(prev =>
       prev.map(t => {
         if (t.id !== id) return t;
@@ -202,6 +293,14 @@ export function useTodos() {
 
   const bulkComplete = async (ids: string[]) => {
     if (!ids.length) return;
+
+    const { error } = await supabase.from('todos').update({ is_complete: true }).in('id', ids);
+    if (error) {
+      toast.error('Failed to complete selected tasks');
+      console.error(error);
+      return;
+    }
+
     setTodos(prev =>
       prev.map(todo =>
         ids.includes(todo.id)
@@ -214,6 +313,14 @@ export function useTodos() {
 
   const bulkDelete = async (ids: string[]) => {
     if (!ids.length) return;
+
+    const { error } = await supabase.from('todos').delete().in('id', ids);
+    if (error) {
+      toast.error('Failed to delete selected tasks');
+      console.error(error);
+      return;
+    }
+
     setTodos(prev => prev.filter(todo => !ids.includes(todo.id)).map((todo, index) => ({ ...todo, sort_order: index })));
     toast.success(`${ids.length} tasks removed`);
   };

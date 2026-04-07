@@ -48,11 +48,14 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
+    const canNotify = typeof window !== 'undefined' && 'Notification' in window;
+
+    if (canNotify && Notification.permission === 'default') {
       Notification.requestPermission();
     }
 
     intervalRef.current = setInterval(() => {
+      if (!canNotify) return;
       if (Notification.permission !== 'granted') return;
       const now = new Date();
 

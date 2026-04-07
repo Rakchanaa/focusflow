@@ -12,12 +12,20 @@ const Settings = () => {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const canNotify = typeof window !== 'undefined' && 'Notification' in window;
 
   useEffect(() => {
+    if (!canNotify) {
+      setNotificationsEnabled(false);
+      return;
+    }
+
     setNotificationsEnabled(Notification.permission === 'granted');
-  }, []);
+  }, [canNotify]);
 
   const toggleNotifications = async () => {
+    if (!canNotify) return;
+
     if (Notification.permission === 'default') {
       const perm = await Notification.requestPermission();
       setNotificationsEnabled(perm === 'granted');
